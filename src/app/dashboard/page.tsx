@@ -10,7 +10,7 @@ type Doc = {
   name: string;
   sizeMB: string;
   uploaded?: boolean;
-  url?: string;
+  url?: string | null;
 };
 
 export default function DashboardPage() {
@@ -37,13 +37,14 @@ export default function DashboardPage() {
 
       const res = await fetch("/api/upload", { method: "POST", body: fd });
       if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
+      const data: { url: string | null } = await res.json();
 
       setDocs((prev) =>
         prev.map((d, idx) => (idx === i ? { ...d, uploaded: true, url: data.url } : d))
       );
-    } catch (e: any) {
-      alert(e?.message ?? "Upload failed");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Upload failed";
+      alert(msg);
     } finally {
       setBusyIdx(null);
     }
@@ -64,7 +65,7 @@ export default function DashboardPage() {
 
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {docs.map((d, i) => (
-              <div key={i} className="rounded-2xl border bg-white p-4 shadow-sm">
+              <div key={`${d.name}-${i}`} className="rounded-2xl border bg-white p-4 shadow-sm">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <FileText className="h-5 w-5 text-indigo-600" />
@@ -84,11 +85,7 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="mt-3 flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => uploadOne(i)}
-                    disabled={!!d.uploaded || busyIdx === i}
-                  >
+                  <Button size="sm" onClick={() => uploadOne(i)} disabled={!!d.uploaded || busyIdx === i}>
                     {busyIdx === i ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Uploading…

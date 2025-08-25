@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useDropzone } from "react-dropzone";
+import { useDropzone, type FileRejection } from "react-dropzone";
 import { UploadCloud, AlertCircle } from "lucide-react";
 import clsx from "clsx";
 
@@ -16,18 +16,20 @@ export default function UploadDropzone({
   multiple = true,
   maxSizeMB = 25,
 }: Props) {
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string>("");
 
   const onDrop = useCallback(
-    (accepted: File[], rejections: any[]) => {
+    (accepted: File[], rejections: FileRejection[]) => {
       setError("");
+
       if (rejections?.length) {
         const msg = rejections
-          .map((r: any) => `${r.file.name}: ${r.errors.map((e: any) => e.message).join(", ")}`)
+          .map((r) => `${r.file.name}: ${r.errors.map((e) => e.message).join(", ")}`)
           .join(" | ");
         setError(msg);
         return;
       }
+
       if (accepted.length) onFiles(accepted);
     },
     [onFiles]

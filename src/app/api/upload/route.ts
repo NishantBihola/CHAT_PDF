@@ -5,7 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE!, // server-only key
+  process.env.SUPABASE_SERVICE_ROLE!,
   { auth: { persistSession: false } }
 );
 
@@ -33,17 +33,20 @@ export async function POST(req: Request) {
     });
     if (error) throw error;
 
-    // Public buckets:
-    const { data: { publicUrl } } = supabase.storage.from(BUCKET).getPublicUrl(path);
+    // Public bucket URL (for private, generate signed URL instead)
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from(BUCKET).getPublicUrl(path);
 
     return Response.json({
       name: file.name,
       mime: file.type,
       sizeMB: (buffer.byteLength / (1024 * 1024)).toFixed(2),
       path,
-      url: publicUrl, // if bucket is private, this won't be accessible; see step 4
+      url: publicUrl as string | null,
     });
-  } catch (e: any) {
-    return new Response(e?.message ?? "Upload error", { status: 500 });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Upload error";
+    return new Response(msg, { status: 500 });
   }
 }
