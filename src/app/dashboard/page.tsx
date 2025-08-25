@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useUser } from "@clerk/nextjs";
 import UploadDropzone from "@/components/UploadDropzone";
 import { Button } from "@/components/ui/button";
 import { FileText, Loader2, Trash2, CheckCircle2 } from "lucide-react";
@@ -14,6 +15,9 @@ type Doc = {
 };
 
 export default function DashboardPage() {
+  const { user } = useUser();
+  const userId = user?.id ?? null;
+
   const [docs, setDocs] = useState<Doc[]>([]);
   const [busyIdx, setBusyIdx] = useState<number | null>(null);
 
@@ -34,6 +38,7 @@ export default function DashboardPage() {
     try {
       const fd = new FormData();
       fd.append("file", doc.file);
+      if (userId) fd.append("userId", userId);
 
       const res = await fetch("/api/upload", { method: "POST", body: fd });
       if (!res.ok) throw new Error(await res.text());
